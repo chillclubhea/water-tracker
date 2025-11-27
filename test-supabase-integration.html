@@ -4,7 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Supabase 測試 - 修正版</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+   <!-- 確保在代碼之前加載 Supabase -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+    // 您的代碼在這裡
+    const supabase = supabase.createClient(...);
+</script>
     <style>
         body { font-family: Arial; max-width: 600px; margin: 50px auto; padding: 20px; }
         .test-area { margin: 20px 0; padding: 15px; border: 1px solid #ddd; }
