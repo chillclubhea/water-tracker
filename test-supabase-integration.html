@@ -8,7 +8,11 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
     // 您的代碼在這裡
-    const supabase = supabase.createClient(...);
+   const supabase = supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.key, {
+    auth: {
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: true
 </script>
     <style>
         body { font-family: Arial; max-width: 600px; margin: 50px auto; padding: 20px; }
