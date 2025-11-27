@@ -3,112 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Supabase + Netlify 整合測試</title>
+    <title>Supabase 測試 - 修正版</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { 
-            font-family: Arial, sans-serif; 
-            max-width: 800px; 
-            margin: 50px auto; 
-            padding: 20px; 
-            background: #f5f5f5;
-        }
-        .container { 
-            background: white; 
-            border-radius: 10px; 
-            padding: 30px; 
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        .test-section { 
-            margin: 20px 0; 
-            padding: 20px; 
-            border: 1px solid #ddd; 
-            border-radius: 8px; 
-        }
-        button { 
-            background: #3498db; 
-            color: white; 
-            border: none; 
-            padding: 10px 20px; 
-            margin: 5px; 
-            border-radius: 5px; 
-            cursor: pointer; 
-        }
-        button:hover { background: #2980b9; }
-        .result { 
-            margin: 10px 0; 
-            padding: 10px; 
-            border-radius: 5px; 
-            display: none;
-        }
-        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
-        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
-        .step { margin: 10px 0; padding: 10px; background: #f8f9fa; border-radius: 5px; }
+        body { font-family: Arial; max-width: 600px; margin: 50px auto; padding: 20px; }
+        .test-area { margin: 20px 0; padding: 15px; border: 1px solid #ddd; }
+        button { padding: 10px; margin: 5px; background: #3498db; color: white; border: none; cursor: pointer; }
+        .result { padding: 10px; margin: 10px 0; display: none; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>🔗 Supabase + Netlify 整合測試</h1>
-        <p>這個頁面將測試您的 Supabase 資料庫是否正確連接到 Netlify 部署的網站。</p>
-
-        <!-- 測試1: 基本連接測試 -->
-        <div class="test-section">
-            <h3>1. 基本連接測試</h3>
-            <div class="step">
-                <button onclick="testConnection()">測試 Supabase 連接</button>
-                <div id="connection-result" class="result"></div>
-            </div>
-        </div>
-
-        <!-- 測試2: 認證功能測試 -->
-        <div class="test-section">
-            <h3>2. 認證功能測試</h3>
-            <div class="step">
-                <input type="email" id="test-email" placeholder="測試郵箱" value="test@example.com" style="padding: 8px; width: 200px;">
-                <input type="password" id="test-password" placeholder="測試密碼" value="test123456" style="padding: 8px; width: 200px;">
-                <button onclick="testAuth()">測試註冊/登入</button>
-                <div id="auth-result" class="result"></div>
-            </div>
-        </div>
-
-        <!-- 測試3: 資料庫操作測試 -->
-        <div class="test-section">
-            <h3>3. 資料庫操作測試</h3>
-            <div class="step">
-                <button onclick="testDatabase()">測試資料庫讀寫</button>
-                <div id="database-result" class="result"></div>
-            </div>
-        </div>
-
-        <!-- 測試4: 環境變數測試 -->
-        <div class="test-section">
-            <h3>4. 環境配置檢查</h3>
-            <div class="step">
-                <button onclick="checkEnvironment()">檢查環境配置</button>
-                <div id="environment-result" class="result"></div>
-            </div>
-        </div>
-
-        <!-- 測試結果總結 -->
-        <div class="test-section">
-            <h3>📊 測試結果總結</h3>
-            <div id="summary-result" class="result info">
-                點擊上方按鈕開始測試...
-            </div>
-            <button onclick="runAllTests()" style="background: #27ae60;">執行所有測試</button>
-        </div>
+    <h1>🔗 Supabase 連接測試 - 修正版</h1>
+    
+    <div class="test-area">
+        <h3>環境資訊</h3>
+        <div id="env-info"></div>
+    </div>
+    
+    <div class="test-area">
+        <h3>Supabase 連接測試</h3>
+        <button onclick="testConnection()">測試連接</button>
+        <div id="connection-result" class="result"></div>
+    </div>
+    
+    <div class="test-area">
+        <h3>認證測試</h3>
+        <input type="email" id="test-email" placeholder="test@example.com" value="test@example.com">
+        <input type="password" id="test-pwd" placeholder="password" value="test123456">
+        <button onclick="testAuth()">測試認證</button>
+        <div id="auth-result" class="result"></div>
     </div>
 
-    <!-- 引入 Supabase -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        // 🔧 配置 - 請替換為您的實際值
+        // ==================== 第一步：配置和初始化 ====================
+        
+        // 1. 配置 Supabase
         const SUPABASE_CONFIG = {
-            url: 'https://fayorxvfxtrycjiiiyfu.supabase.co',
-            key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZheW9yeHZmeHRyeWNqaWlpeWZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQyNzY1MTAsImV4cCI6MjA3OTg1MjUxMH0.7znE_AaNg6zESUO-RoSsyFqxCgcxjPT_pQiN557e6Nw'
+            url: 'https://您的項目編號.supabase.co',  // 替換為您的 URL
+            key: '您的-anon-key'                      // 替換為您的 anon key
         };
 
-        // 初始化 Supabase 客戶端
+        // 2. 立即初始化 Supabase 客戶端
         const supabase = supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.key, {
             auth: {
                 autoRefreshToken: true,
@@ -117,191 +54,140 @@
             }
         });
 
-        let testResults = {
-            connection: false,
-            auth: false,
-            database: false,
-            environment: false
-        };
-
-        // 顯示測試結果
-        function showResult(elementId, message, isSuccess) {
-            const element = document.getElementById(elementId);
-            element.innerHTML = message;
-            element.className = `result ${isSuccess ? 'success' : 'error'}`;
-            element.style.display = 'block';
+        // 3. 配置驗證
+        function validateConfig() {
+            if (!SUPABASE_CONFIG.url || !SUPABASE_CONFIG.key) {
+                console.error('❌ Supabase 配置缺失');
+                return false;
+            }
+            if (!SUPABASE_CONFIG.url.includes('.supabase.co')) {
+                console.error('❌ Supabase URL 格式錯誤');
+                return false;
+            }
+            console.log('✅ 配置驗證通過');
+            return true;
         }
 
-        // 測試1: 基本連接
+        // ==================== 第二步：功能函數 ====================
+
+        // 顯示環境資訊
+        function showEnvironmentInfo() {
+            document.getElementById('env-info').innerHTML = `
+                <p>當前域名: <strong>${window.location.hostname}</strong></p>
+                <p>協議: <strong>${window.location.protocol}</strong></p>
+                <p>Supabase 配置: <strong>${validateConfig() ? '✅ 有效' : '❌ 無效'}</strong></p>
+            `;
+        }
+
+        // 測試連接
         async function testConnection() {
-            showResult('connection-result', '🔄 測試連接中...', true);
+            const resultEl = document.getElementById('connection-result');
+            resultEl.textContent = '🔄 測試連接中...';
+            resultEl.className = 'result';
+            resultEl.style.display = 'block';
             
             try {
-                // 嘗試簡單的查詢來測試連接
-                const { data, error } = await supabase.from('_dummy_table_').select('*').limit(1);
+                // 測試查詢（使用不存在的表來觸發特定錯誤）
+                const { data, error } = await supabase
+                    .from('_test_connection_table_')
+                    .select('*')
+                    .limit(1);
                 
-                if (error && error.code === '42P01') {
-                    // 表不存在錯誤 - 這實際上表示連接成功！
-                    showResult('connection-result', '✅ 連接成功！Supabase 響應正常。', true);
-                    testResults.connection = true;
-                } else if (error) {
-                    showResult('connection-result', `❌ 連接錯誤: ${error.message}`, false);
-                    testResults.connection = false;
+                if (error) {
+                    if (error.code === '42P01') {
+                        // 表不存在錯誤 - 這表示連接實際上是成功的！
+                        resultEl.textContent = '✅ 連接成功！Supabase 服務正常響應';
+                        resultEl.className = 'result success';
+                    } else {
+                        resultEl.textContent = `❌ 連接錯誤: ${error.message} (代碼: ${error.code})`;
+                        resultEl.className = 'result error';
+                    }
                 } else {
-                    showResult('connection-result', '✅ 連接成功！', true);
-                    testResults.connection = true;
+                    resultEl.textContent = '✅ 連接成功！';
+                    resultEl.className = 'result success';
                 }
-            } catch (error) {
-                showResult('connection-result', `❌ 連接異常: ${error.message}`, false);
-                testResults.connection = false;
+            } catch (err) {
+                resultEl.textContent = `❌ 異常: ${err.message}`;
+                resultEl.className = 'result error';
             }
-            
-            updateSummary();
         }
 
-        // 測試2: 認證功能
+        // 測試認證
         async function testAuth() {
             const email = document.getElementById('test-email').value;
-            const password = document.getElementById('test-password').value;
+            const password = document.getElementById('test-pwd').value;
+            const resultEl = document.getElementById('auth-result');
             
-            showResult('auth-result', '🔄 測試認證功能中...', true);
+            if (!email || !password) {
+                resultEl.textContent = '❌ 請輸入郵箱和密碼';
+                resultEl.className = 'result error';
+                resultEl.style.display = 'block';
+                return;
+            }
+            
+            resultEl.textContent = '🔄 認證測試中...';
+            resultEl.className = 'result';
+            resultEl.style.display = 'block';
             
             try {
-                // 嘗試註冊新用戶
-                const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+                // 先嘗試註冊
+                const { data, error } = await supabase.auth.signUp({
                     email: email,
-                    password: password,
+                    password: password
                 });
 
-                if (signUpError) {
-                    if (signUpError.message.includes('already registered')) {
+                if (error) {
+                    if (error.message.includes('already registered') || error.message.includes('用戶已存在')) {
                         // 用戶已存在，嘗試登入
                         const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
                             email: email,
-                            password: password,
+                            password: password
                         });
-
+                        
                         if (signInError) {
-                            showResult('auth-result', `❌ 登入失敗: ${signInError.message}`, false);
-                            testResults.auth = false;
+                            resultEl.textContent = `❌ 登入失敗: ${signInError.message}`;
+                            resultEl.className = 'result error';
                         } else {
-                            showResult('auth-result', '✅ 認證成功！用戶已登入。', true);
-                            testResults.auth = true;
+                            resultEl.textContent = '✅ 登入成功！認證功能正常';
+                            resultEl.className = 'result success';
                         }
                     } else {
-                        showResult('auth-result', `❌ 註冊失敗: ${signUpError.message}`, false);
-                        testResults.auth = false;
+                        resultEl.textContent = `❌ 註冊失敗: ${error.message}`;
+                        resultEl.className = 'result error';
                     }
                 } else {
-                    showResult('auth-result', '✅ 註冊成功！請檢查郵箱確認。', true);
-                    testResults.auth = true;
-                }
-            } catch (error) {
-                showResult('auth-result', `❌ 認證異常: ${error.message}`, false);
-                testResults.auth = false;
-            }
-            
-            updateSummary();
-        }
-
-        // 測試3: 資料庫操作
-        async function testDatabase() {
-            showResult('database-result', '🔄 測試資料庫操作中...', true);
-            
-            try {
-                // 首先檢查必要的表是否存在
-                const { data: tables, error: tablesError } = await supabase
-                    .from('information_schema.tables')
-                    .select('table_name')
-                    .eq('table_schema', 'public')
-                    .limit(5);
-
-                if (tablesError) {
-                    showResult('database-result', `⚠️ 無法讀取表信息: ${tablesError.message}`, false);
-                } else {
-                    let message = '✅ 資料庫可訪問。<br>現有表: ';
-                    if (tables && tables.length > 0) {
-                        message += tables.map(t => t.table_name).join(', ');
+                    if (data.user && data.session) {
+                        resultEl.textContent = '✅ 註冊並自動登入成功！';
+                        resultEl.className = 'result success';
                     } else {
-                        message += '無表或無權限訪問';
+                        resultEl.textContent = '✅ 註冊請求已發送，請檢查郵箱確認';
+                        resultEl.className = 'result success';
                     }
-                    showResult('database-result', message, true);
-                    testResults.database = true;
                 }
-            } catch (error) {
-                showResult('database-result', `❌ 資料庫操作異常: ${error.message}`, false);
-                testResults.database = false;
+            } catch (err) {
+                resultEl.textContent = `❌ 異常: ${err.message}`;
+                resultEl.className = 'result error';
             }
-            
-            updateSummary();
         }
 
-        // 測試4: 環境配置
-        async function checkEnvironment() {
-            showResult('environment-result', '🔄 檢查環境配置中...', true);
-            
-            try {
-                const configInfo = `
-                    <strong>當前配置:</strong><br>
-                    - Supabase URL: ${SUPABASE_CONFIG.url ? '✅ 已設置' : '❌ 未設置'}<br>
-                    - Supabase Key: ${SUPABASE_CONFIG.key ? '✅ 已設置' : '❌ 未設置'}<br>
-                    - 當前域名: ${window.location.hostname}<br>
-                    - 協議: ${window.location.protocol}
-                `;
-                
-                // 檢查是否在 Netlify 上運行
-                const isNetlify = window.location.hostname.includes('netlify.app');
-                const netlifyInfo = isNetlify ? '✅ 運行在 Netlify' : '⚠️ 未運行在 Netlify';
-                
-                showResult('environment-result', `${configInfo}<br>${netlifyInfo}`, true);
-                testResults.environment = true;
-            } catch (error) {
-                showResult('environment-result', `❌ 環境檢查異常: ${error.message}`, false);
-                testResults.environment = false;
-            }
-            
-            updateSummary();
-        }
+        // ==================== 第三步：初始化頁面 ====================
 
-        // 更新測試總結
-        function updateSummary() {
-            const passed = Object.values(testResults).filter(Boolean).length;
-            const total = Object.keys(testResults).length;
-            const percentage = Math.round((passed / total) * 100);
-            
-            let summaryHTML = `
-                <strong>測試進度: ${passed}/${total} (${percentage}%)</strong><br>
-                <ul>
-                    <li>${testResults.connection ? '✅' : '❌'} 基本連接測試</li>
-                    <li>${testResults.auth ? '✅' : '❌'} 認證功能測試</li>
-                    <li>${testResults.database ? '✅' : '❌'} 資料庫操作測試</li>
-                    <li>${testResults.environment ? '✅' : '❌'} 環境配置檢查</li>
-                </ul>
-            `;
-            
-            if (percentage === 100) {
-                summaryHTML += '<br>🎉 所有測試通過！您的 Supabase + Netlify 整合成功！';
-            } else if (percentage >= 50) {
-                summaryHTML += '<br>⚠️ 部分測試通過，請檢查失敗的項目。';
-            } else {
-                summaryHTML += '<br>❌ 多數測試失敗，請檢查配置。';
-            }
-            
-            document.getElementById('summary-result').innerHTML = summaryHTML;
-        }
-
-        // 執行所有測試
-        async function runAllTests() {
-            await testConnection();
-            await testAuth();
-            await testDatabase();
-            await checkEnvironment();
-        }
-
-        // 頁面加載時自動檢查環境
+        // 頁面加載完成後執行
         document.addEventListener('DOMContentLoaded', function() {
-            checkEnvironment();
+            console.log('🚀 頁面加載完成，初始化 Supabase...');
+            showEnvironmentInfo();
+            
+            // 驗證配置
+            if (!validateConfig()) {
+                document.getElementById('connection-result').textContent = 
+                    '❌ Supabase 配置無效，請檢查 URL 和 Key';
+                document.getElementById('connection-result').className = 'result error';
+                document.getElementById('connection-result').style.display = 'block';
+            } else {
+                console.log('✅ Supabase 初始化完成');
+            }
         });
+
     </script>
 </body>
 </html>
