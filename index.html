@@ -1,879 +1,643 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>每日飲水記錄器 - 雲端會員版</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>馬拉松體重管理系統 (Supabase)</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root {
-            --primary-color: #3498db;
-            --secondary-color: #2980b9;
-            --bg-color: #f4f7f6;
-            --text-color: #333;
-            --white: #ffffff;
-            --danger: #e74c3c;
-            --success: #2ecc71;
-        }
-
-        * {
-            box-sizing: border-box;
+        /* (CSS 樣式與前一版相同，為節省篇幅在此省略，但已包含在最終程式碼中) */
+        /* 基本與響應式樣式 */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
             margin: 0;
             padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #333;
         }
-
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            padding: 20px;
-        }
-
         .container {
-            background-color: var(--white);
-            border-radius: 20px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            width: 100%;
-            max-width: 450px;
-            overflow: hidden;
-            position: relative;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
-
-        /* Auth Screens (Login/Register) */
-        .auth-screen {
-            padding: 40px;
+        h1 {
+            color: #007bff;
             text-align: center;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+            margin-bottom: 25px;
         }
-
-        .auth-screen h2 {
-            color: var(--primary-color);
-            margin-bottom: 20px;
+        
+        /* 註冊/輸入區域樣式 */
+        .input-section {
+            background-color: #e6f7ff;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
         }
-
+        .input-section h2 {
+            color: #0056b3;
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
         .form-group {
             margin-bottom: 15px;
-            text-align: left;
         }
-
         .form-group label {
             display: block;
+            font-weight: bold;
             margin-bottom: 5px;
-            font-size: 0.9rem;
-            color: #666;
         }
-
-        .form-group input {
+        .form-group input[type="text"],
+        .form-group input[type="number"],
+        .form-group input[type="date"] {
             width: 100%;
             padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            font-size: 1rem;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+            font-size: 16px; /* 防止移動端縮放 */
         }
-
-        .btn-block {
-            width: 100%;
-            padding: 12px;
-            background-color: var(--primary-color);
+        .btn-primary {
+            background-color: #28a745;
             color: white;
             border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        .btn-primary:hover {
+            background-color: #1e7e34;
+        }
+
+        /* 學員列表樣式 */
+        #studentList {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .student-card {
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
             border-radius: 8px;
-            cursor: pointer;
-            font-size: 1rem;
-            margin-top: 10px;
-            transition: background 0.3s;
-        }
-
-        .btn-block:hover {
-            background-color: var(--secondary-color);
-        }
-
-        .toggle-link {
-            margin-top: 15px;
-            font-size: 0.9rem;
-            color: #666;
-            cursor: pointer;
-        }
-
-        .toggle-link span {
-            color: var(--primary-color);
-            font-weight: bold;
-        }
-
-        .error-msg {
-            color: var(--danger);
-            font-size: 0.85rem;
-            margin-top: 5px;
-            min-height: 20px;
-        }
-
-        /* Main App Screen */
-        .app-screen {
-            display: none;
-            padding: 30px;
-        }
-
-        header {
-            text-align: center;
-            margin-bottom: 30px;
-            position: relative;
-        }
-
-        .logout-btn {
-            position: absolute;
-            top: -10px;
-            right: -10px;
-            background: none;
-            border: none;
-            color: #999;
-            cursor: pointer;
-            font-size: 0.9rem;
-        }
-        
-        .logout-btn:hover {
-            color: var(--danger);
-        }
-
-        h1 {
-            font-size: 1.8rem;
-            color: var(--primary-color);
-            margin-bottom: 5px;
-        }
-
-        .date-display {
-            color: #7f8c8d;
-            font-size: 0.9rem;
-        }
-
-        .time-display {
-            color: var(--primary-color);
-            font-size: 1.2rem;
-            font-weight: bold;
-            margin-top: 5px;
-        }
-
-        .user-greeting {
-            text-align: center;
-            margin-bottom: 15px;
-            font-weight: bold;
-            color: var(--secondary-color);
-        }
-
-        /* Progress Circle */
-        .progress-container {
+            padding: 15px;
             display: flex;
-            flex-direction: column;
             align-items: center;
-            margin-bottom: 30px;
+            cursor: pointer;
+            transition: box-shadow 0.3s, transform 0.3s;
         }
-
-        .progress-circle {
-            width: 150px;
-            height: 150px;
+        .student-card:hover {
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+            transform: translateY(-2px);
+        }
+        .avatar-placeholder {
+            width: 60px;
+            height: 60px;
+            background-color: #007bff;
             border-radius: 50%;
-            background: #e0f7fa;
-            position: relative;
-            overflow: hidden;
             display: flex;
             justify-content: center;
             align-items: center;
-            box-shadow: inset 0 0 20px rgba(0,0,0,0.1);
-            border: 4px solid var(--white);
-            margin-bottom: 20px;
+            color: white;
+            font-size: 30px;
+            margin-right: 15px;
+            overflow: hidden;
+            flex-shrink: 0;
         }
-
-        .wave {
-            position: absolute;
-            bottom: 0;
-            left: 0;
+        .avatar-img {
             width: 100%;
-            height: 0%;
-            background-color: var(--primary-color);
-            transition: height 0.5s ease;
-            z-index: 1;
+            height: 100%;
+            object-fit: cover;
         }
-
-        .percentage-text {
-            position: relative;
-            z-index: 2;
-            font-size: 2rem;
+        .student-info {
+            flex-grow: 1;
+            text-align: left;
+        }
+        .student-info strong {
+            display: block;
+            font-size: 18px;
+            margin-bottom: 4px;
+            color: #333;
+        }
+        .student-info span {
+            font-size: 14px;
+            color: #6c757d;
+        }
+        .latest-weight {
+            font-size: 20px;
             font-weight: bold;
-            color: var(--text-color);
-            text-shadow: 0 0 5px rgba(255,255,255,0.8);
+            color: #dc3545;
+            margin-left: 15px;
+            flex-shrink: 0;
         }
 
-        .stats {
-            text-align: center;
-            width: 100%;
+        /* 詳情與記錄區域樣式 (Modal-like) */
+        .detail-section {
+            background-color: #fff;
+            padding: 20px;
+            border: 2px solid #007bff;
+            border-radius: 8px;
+            display: none; /* 預設隱藏 */
+            margin-top: 20px;
+        }
+        .detail-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 1px dashed #ccc;
+            padding-bottom: 10px;
+        }
+        .detail-header h3 {
+            margin: 0;
+            font-size: 24px;
+            color: #007bff;
+        }
+        .weight-summary {
             display: flex;
             justify-content: space-around;
-            background: #f8f9fa;
-            padding: 10px;
-            border-radius: 10px;
-        }
-
-        .stats p {
-            font-size: 0.9rem;
-            color: #555;
-        }
-
-        .stats span {
-            font-weight: bold;
-            color: var(--primary-color);
-            font-size: 1.1rem;
-        }
-
-        /* Controls */
-        .controls {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .quick-buttons {
-            display: flex;
-            gap: 10px;
-        }
-
-        .btn {
-            padding: 10px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: transform 0.1s, background 0.3s;
-        }
-
-        .btn:active {
-            transform: scale(0.98);
-        }
-
-        .add-btn {
-            flex: 1;
-            background-color: #e3f2fd;
-            color: var(--primary-color);
-            border: 1px solid var(--primary-color);
-        }
-
-        .add-btn:hover {
-            background-color: var(--primary-color);
-            color: white;
-        }
-
-        .custom-input {
-            display: flex;
-            gap: 10px;
-        }
-
-        .custom-input input {
-            flex: 1;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
             text-align: center;
-        }
-
-        .submit-btn {
-            background-color: var(--success);
-            color: white;
-            padding: 0 20px;
-        }
-
-        .submit-btn:hover {
-            background-color: #27ae60;
-        }
-
-        .reset-btn {
-            background-color: #ffebee;
-            color: var(--danger);
-            width: 100%;
-            margin-top: 10px;
-        }
-
-        .reset-btn:hover {
-            background-color: #ffcdd2;
-        }
-
-        /* History List */
-        .history-section {
-            margin-top: 25px;
-            border-top: 1px solid #eee;
-            padding-top: 15px;
-        }
-
-        .history-section h3 {
-            font-size: 1rem;
-            margin-bottom: 10px;
-            color: #555;
-        }
-
-        #history-list {
-            list-style: none;
-            max-height: 150px;
-            overflow-y: auto;
-        }
-
-        #history-list li {
-            display: flex;
-            justify-content: space-between;
-            padding: 8px 0;
-            border-bottom: 1px solid #f1f1f1;
-            font-size: 0.9rem;
-        }
-
-        #history-list li span.time {
-            color: #999;
-            font-size: 0.8rem;
-        }
-
-        /* Scrollbar styling */
-        #history-list::-webkit-scrollbar {
-            width: 5px;
-        }
-        #history-list::-webkit-scrollbar-thumb {
-            background: #ccc;
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: #f4f7f6;
             border-radius: 5px;
         }
-
-        .hidden {
-            display: none !important;
+        .weight-summary div {
+            flex: 1;
+        }
+        .weight-value {
+            font-size: 22px;
+            font-weight: bold;
+            color: #dc3545;
+        }
+        .weight-history-list {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #eee;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .weight-history-list li {
+            list-style: none;
+            padding: 8px 0;
+            border-bottom: 1px dotted #ddd;
+            display: flex;
+            justify-content: space-between;
+        }
+        .weight-history-list li:last-child {
+            border-bottom: none;
+        }
+        .record-form-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            align-items: flex-end;
+        }
+        .record-form-group > div {
+            flex: 1;
+        }
+        .record-form-group button {
+            flex-shrink: 0;
         }
         
-        /* 加载指示器 */
-        .loading {
-            opacity: 0.7;
-            pointer-events: none;
+        /* 響應式優化 (小螢幕) */
+        @media screen and (max-width: 768px) {
+            .container {
+                margin: 10px;
+                padding: 15px;
+            }
+            #studentList {
+                grid-template-columns: 1fr; /* 單列顯示 */
+            }
+            .student-card {
+                padding: 10px;
+            }
+            .weight-summary {
+                flex-direction: column;
+            }
+            .weight-summary div {
+                margin: 5px 0;
+            }
+            .record-form-group {
+                flex-direction: column;
+                gap: 5px;
+            }
+            .record-form-group button {
+                width: 100%;
+            }
         }
-        
-        .loading::after {
-            content: "";
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 30px;
-            height: 30px;
-            margin: -15px 0 0 -15px;
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid var(--primary-color);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        /* 提示區塊 */
+        .alert-info {
+            background-color: #ffeccf;
+            border: 1px solid #ffbb58;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            color: #a0522d;
+            font-weight: bold;
         }
     </style>
 </head>
 <body>
 
     <div class="container">
+        <h1>🏃 馬拉松體重管理系統 ()</h1>
         
-        <!-- 1. 登入畫面 -->
-        <div id="login-screen" class="auth-screen">
-            <h2><i class="fas fa-user-circle"></i> 會員登入</h2>
-            <div class="form-group">
-                <label>電子郵件</label>
-                <input type="email" id="login-email" placeholder="輸入您的電子郵件">
-            </div>
-            <div class="form-group">
-                <label>密碼</label>
-                <input type="password" id="login-pass" placeholder="輸入您的密碼">
-            </div>
-            <p id="login-error" class="error-msg"></p>
-            <button class="btn-block" id="login-btn">登入</button>
-            <div class="toggle-link" id="show-register">
-                還沒有帳號？ <span>立即註冊</span>
-            </div>
+        <div class="alert-info">
+            ⚠️ **重要提示**: 請在 &lt;script&gt; 區塊中，將 `YOUR_SUPABASE_URL` 和 `YOUR_SUPABASE_ANON_KEY` 替換為您的實際 Supabase 專案憑證！
         </div>
 
-        <!-- 2. 註冊畫面 -->
-        <div id="register-screen" class="auth-screen hidden">
-            <h2><i class="fas fa-user-plus"></i> 註冊新帳號</h2>
+        <div class="input-section">
+            <h2>📝 新增學員登記</h2>
             <div class="form-group">
-                <label>電子郵件</label>
-                <input type="email" id="reg-email" placeholder="輸入您的電子郵件">
-            </div>
-            <div class="form-group">
-                <label>設定密碼</label>
-                <input type="password" id="reg-pass" placeholder="設定密碼（至少6位）">
+                <label for="newStudentName">學員姓名:</label>
+                <input type="text" id="newStudentName" placeholder="請輸入學員全名" required>
             </div>
             <div class="form-group">
-                <label>每日目標 (ml)</label>
-                <input type="number" id="reg-goal" value="2000">
+                <label for="newStudentAvatar">頭像 (可選):</label>
+                <input type="file" id="newStudentAvatar" accept="image/*" onchange="previewAvatar(event)">
+                <div id="avatarPreview" class="avatar-placeholder" style="margin-top: 10px; font-size: 14px;">預覽圖</div>
             </div>
-            <p id="reg-error" class="error-msg"></p>
-            <button class="btn-block" id="register-btn">註冊並登入</button>
-            <div class="toggle-link" id="show-login">
-                已有帳號？ <span>返回登入</span>
+            <div class="form-group">
+                <label for="initialWeight">初始體重 (公斤):</label>
+                <input type="number" id="initialWeight" min="1" step="0.1" placeholder="例如: 75.5" required>
             </div>
+            <button class="btn-primary" onclick="addStudent()">新增學員並記錄初始體重</button>
         </div>
 
-        <!-- 3. 主應用畫面 (登入後顯示) -->
-        <div id="app-screen" class="app-screen">
-            <header>
-                <button class="logout-btn" id="logout-btn">
-                    <i class="fas fa-sign-out-alt"></i> 登出
-                </button>
-                <h1><i class="fas fa-tint"></i> 飲水記錄器</h1>
-                <p id="current-date" class="date-display">載入日期中...</p>
-                <!-- 實時時間顯示 -->
-                <div id="real-time-clock" class="time-display">00:00:00</div>
-            </header>
+        <h2>📊 學員清單 (點擊卡片記錄/查看詳情)</h2>
+        <div id="studentList">
+            <p style="text-align: center; color: #007bff;">載入中... 請檢查 Supabase 連線。</p>
+        </div>
 
-            <div class="user-greeting">
-                嗨，<span id="display-username">User</span>！加油！
-            </div>
-
-            <!-- 進度顯示 -->
-            <div class="progress-container">
-                <div class="progress-circle">
-                    <span id="percentage" class="percentage-text">0%</span>
-                    <div class="wave" id="wave"></div>
-                </div>
-                <div class="stats">
-                    <p>已喝: <span id="current-intake">0</span> ml</p>
-                    <p>目標: <span id="goal-intake">2000</span> ml</p>
+        <div id="studentDetail" class="detail-section">
+            <div class="detail-header">
+                <div id="detail-avatar" class="avatar-placeholder" style="width: 80px; height: 80px; font-size: 40px; margin-right: 20px;"></div>
+                <div>
+                    <h3 id="detail-name"></h3>
+                    <p id="detail-initial-weight" style="margin: 0; color: #6c757d;"></p>
                 </div>
             </div>
-
-            <!-- 操作按鈕 -->
-            <div class="controls">
-                <div class="quick-buttons">
-                    <!-- 點擊後填入數值到輸入框 -->
-                    <button class="btn add-btn" data-amount="250">+250ml</button>
-                    <button class="btn add-btn" data-amount="500">+500ml</button>
-                </div>
-                
-                <div class="custom-input">
-                    <input type="number" id="custom-amount" placeholder="輸入毫升數 (ml)">
-                    <button class="btn submit-btn" id="submit-water">提交記錄</button>
-                </div>
-
-                <button class="btn reset-btn" id="reset-day">重置今日記錄</button>
+            
+            <div class="weight-summary">
+                <div>總體重變化 (公斤) <div id="summary-delta" class="weight-value">0.0 kg</div></div>
+                <div>目前體重 (公斤) <div id="summary-current" class="weight-value">0.0 kg</div></div>
             </div>
 
-            <!-- 記錄列表 -->
-            <div class="history-section">
-                <h3>今日記錄明細</h3>
-                <ul id="history-list">
-                    <!-- JS 插入 -->
+            <h4 style="border-left: 5px solid #007bff; padding-left: 10px;">📉 體重歷史記錄</h4>
+            <ul id="weightHistory" class="weight-history-list">
                 </ul>
+
+            <h4 style="border-left: 5px solid #28a745; padding-left: 10px; margin-top: 25px;">➕ 新增體重記錄</h4>
+            <div class="record-form-group">
+                <div>
+                    <label for="recordDate">日期:</label>
+                    <input type="date" id="recordDate" required>
+                </div>
+                <div>
+                    <label for="recordWeight">體重 (公斤):</label>
+                    <input type="number" id="recordWeight" min="1" step="0.1" placeholder="請輸入體重" required>
+                </div>
+                <button class="btn-primary" onclick="recordWeight()">記錄</button>
             </div>
+            <button class="btn-primary" style="background-color: #dc3545; margin-top: 15px;" onclick="document.getElementById('studentDetail').style.display='none'">關閉詳情</button>
         </div>
     </div>
 
     <script>
-        // --- Supabase 初始化 ---
-        const SUPABASE_URL = 'https://fayorxvfxtrycjiiiyfu.supabase.co'; // 替换为你的Supabase URL
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZheW9yeHZmeHRyeWNqaWlpeWZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQyNzY1MTAsImV4cCI6MjA3OTg1MjUxMH0.7znE_AaNg6zESUO-RoSsyFqxCgcxjPT_pQiN557e6Nw'; // 替换为你的Supabase anon key
+        // ==========================================================
+        // 🚨 步驟 1: SUPABASE 憑證設定
+        // 請替換為您的實際 URL 和 Anon Key
+        const SUPABASE_URL = 'https://rnghrlmernrtuqntvjkt.supabase.co'; 
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJuZ2hybG1lcm5ydHVxbnR2amt0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU4MTY0ODAsImV4cCI6MjA4MTM5MjQ4MH0.VuHiyBoc8zCT4YLlVAtQeDHyFziimZWtZfvRYI23DSk';
         
         const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        
-        // --- 狀態變數 ---
-        let currentUser = null;
-        let currentDate = new Date().toDateString();
-        let timerInterval = null;
-        
-        // --- DOM 元素 ---
-        const loginScreen = document.getElementById('login-screen');
-        const registerScreen = document.getElementById('register-screen');
-        const appScreen = document.getElementById('app-screen');
-        const loginBtn = document.getElementById('login-btn');
-        const registerBtn = document.getElementById('register-btn');
-        const logoutBtn = document.getElementById('logout-btn');
-        const showRegister = document.getElementById('show-register');
-        const showLogin = document.getElementById('show-login');
-        const submitWaterBtn = document.getElementById('submit-water');
-        const resetDayBtn = document.getElementById('reset-day');
-        const quickButtons = document.querySelectorAll('.add-btn');
+        // ==========================================================
 
-        // --- 初始化 ---
+        let currentStudents = [];
+        let currentViewingStudentId = null;
+
         document.addEventListener('DOMContentLoaded', () => {
-            checkSession();
-            startClock();
-            setupEventListeners();
+            if (SUPABASE_URL === 'YOUR_SUPABASE_URL') {
+                 document.getElementById('studentList').innerHTML = '<p style="color: red; text-align: center;">連線錯誤：請先在程式碼中填入您的 Supabase 憑證！</p>';
+                 return;
+            }
+            loadStudents();
+            document.getElementById('recordDate').valueAsDate = new Date(); // 預設日期為今天
         });
 
-        // --- 事件監聽器設置 ---
-        function setupEventListeners() {
-            loginBtn.addEventListener('click', handleLogin);
-            registerBtn.addEventListener('click', handleRegister);
-            logoutBtn.addEventListener('click', handleLogout);
-            showRegister.addEventListener('click', showRegisterScreen);
-            showLogin.addEventListener('click', showLoginScreen);
-            submitWaterBtn.addEventListener('click', submitWater);
-            resetDayBtn.addEventListener('click', resetDay);
+        // --- 核心資料獲取與計算 ---
+
+        /**
+         * 獲取所有學員資料及其最新的體重記錄
+         */
+        async function loadStudents() {
+            document.getElementById('studentList').innerHTML = '<p style="text-align: center; color: #007bff;">載入學員資料中...</p>';
             
-            quickButtons.forEach(button => {
-                button.addEventListener('click', function() {
-                    const amount = this.getAttribute('data-amount');
-                    fillAmount(parseInt(amount));
-                });
-            });
-            
-            // 按Enter提交自定義水量
-            document.getElementById('custom-amount').addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    submitWater();
-                }
-            });
-        }
-
-        // --- 時鐘功能 ---
-        function startClock() {
-            updateTime();
-            timerInterval = setInterval(updateTime, 1000);
-        }
-
-        function updateTime() {
-            const now = new Date();
-            const dateOptions = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
-            document.getElementById('current-date').textContent = now.toLocaleDateString('zh-TW', dateOptions);
-            const timeString = now.toLocaleTimeString('zh-TW', { hour12: false });
-            document.getElementById('real-time-clock').textContent = timeString;
-            
-            // 檢查是否是新的一天
-            const today = now.toDateString();
-            if (today !== currentDate && currentUser) {
-                currentDate = today;
-                checkAndResetDailyData();
-            }
-        }
-
-        // --- 認證系統 (Auth) ---
-        async function checkSession() {
-            const { data: { session }, error } = await supabase.auth.getSession();
-            
-            if (session && session.user) {
-                currentUser = session.user;
-                await loadUserData();
-                showApp();
-            } else {
-                showLoginScreen();
-            }
-        }
-
-        function showLoginScreen() {
-            loginScreen.classList.remove('hidden');
-            registerScreen.classList.add('hidden');
-            appScreen.style.display = 'none';
-            document.getElementById('login-error').textContent = '';
-        }
-
-        function showRegisterScreen() {
-            loginScreen.classList.add('hidden');
-            registerScreen.classList.remove('hidden');
-            appScreen.style.display = 'none';
-            document.getElementById('reg-error').textContent = '';
-        }
-
-        async function handleRegister() {
-            const email = document.getElementById('reg-email').value.trim();
-            const password = document.getElementById('reg-pass').value.trim();
-            const goal = parseInt(document.getElementById('reg-goal').value) || 2000;
-            const errorMsg = document.getElementById('reg-error');
-
-            if (!email || !password) {
-                errorMsg.textContent = "請填寫所有欄位";
-                return;
-            }
-
-            if (password.length < 6) {
-                errorMsg.textContent = "密碼至少需要6位字符";
-                return;
-            }
-
-            // 顯示加載狀態
-            setLoadingState(registerBtn, true);
-
-            try {
-                // 註冊用戶
-                const { data, error } = await supabase.auth.signUp({
-                    email: email,
-                    password: password,
-                });
-
-                if (error) {
-                    errorMsg.textContent = error.message;
-                    setLoadingState(registerBtn, false);
-                    return;
-                }
-
-                // 創建用戶資料
-                const { error: profileError } = await supabase
-                    .from('user_profiles')
-                    .insert([
-                        { 
-                            user_id: data.user.id, 
-                            daily_goal: goal,
-                            created_at: new Date()
-                        }
-                    ]);
-
-                if (profileError) {
-                    console.error('Error creating user profile:', profileError);
-                    errorMsg.textContent = "創建用戶資料時出錯";
-                    setLoadingState(registerBtn, false);
-                    return;
-                }
-
-                // 自動登入
-                currentUser = data.user;
-                showApp();
-            } catch (err) {
-                errorMsg.textContent = "註冊過程中發生錯誤";
-                console.error(err);
-            } finally {
-                setLoadingState(registerBtn, false);
-            }
-        }
-
-        async function handleLogin() {
-            const email = document.getElementById('login-email').value.trim();
-            const password = document.getElementById('login-pass').value.trim();
-            const errorMsg = document.getElementById('login-error');
-
-            if (!email || !password) {
-                errorMsg.textContent = "請填寫所有欄位";
-                return;
-            }
-
-            // 顯示加載狀態
-            setLoadingState(loginBtn, true);
-
-            try {
-                const { data, error } = await supabase.auth.signInWithPassword({
-                    email: email,
-                    password: password,
-                });
-
-                if (error) {
-                    errorMsg.textContent = error.message;
-                    setLoadingState(loginBtn, false);
-                    return;
-                }
-
-                currentUser = data.user;
-                await loadUserData();
-                showApp();
-            } catch (err) {
-                errorMsg.textContent = "登入過程中發生錯誤";
-                console.error(err);
-            } finally {
-                setLoadingState(loginBtn, false);
-            }
-        }
-
-        async function handleLogout() {
-            const { error } = await supabase.auth.signOut();
-            currentUser = null;
-            showLoginScreen();
-        }
-
-        // --- 應用程式主要邏輯 ---
-        async function loadUserData() {
-            if (!currentUser) return;
-            
-            // 加載用戶資料
-            const { data: profileData, error: profileError } = await supabase
-                .from('user_profiles')
+            // 由於 Supabase RLS 策略可能限制 JOIN，我們分步獲取並在客戶端合併
+            const { data: studentsData, error: studentError } = await supabase
+                .from('students')
                 .select('*')
-                .eq('user_id', currentUser.id)
-                .single();
-            
-            if (profileError) {
-                console.error('Error loading user profile:', profileError);
+                .order('name', { ascending: true });
+
+            if (studentError) {
+                console.error('Error fetching students:', studentError);
+                document.getElementById('studentList').innerHTML = `<p style="color: red; text-align: center;">載入學員失敗: ${studentError.message}</p>`;
                 return;
             }
+
+            // 獲取所有學員的最新體重 (可以通過 PostgREST RPC 最佳化，這裡採用簡單的獲取所有記錄方式)
+            const { data: recordsData, error: recordError } = await supabase
+                .from('weight_records')
+                .select('student_id, date, weight');
+
+            if (recordError) {
+                 console.warn('Error fetching weight records:', recordError);
+                 // 即使記錄失敗，我們仍然顯示學員清單
+            }
+
+            const latestWeightsMap = {};
+            if (recordsData) {
+                // 找出每個學員的最新記錄
+                recordsData.forEach(record => {
+                    const id = record.student_id;
+                    if (!latestWeightsMap[id] || new Date(record.date) > new Date(latestWeightsMap[id].date)) {
+                        latestWeightsMap[id] = record;
+                    }
+                });
+            }
+
+            currentStudents = studentsData.map(student => ({
+                ...student,
+                // 為渲染列表提供最新的體重資訊
+                latestWeight: latestWeightsMap[student.id] ? latestWeightsMap[student.id].weight : student.initial_weight,
+            }));
+
+            renderStudentList();
+        }
+
+        /**
+         * 獲取單個學員的所有體重歷史
+         */
+        async function getWeightHistory(studentId) {
+            const { data, error } = await supabase
+                .from('weight_records')
+                .select('*')
+                .eq('student_id', studentId)
+                .order('date', { ascending: false }); // 最新記錄在前
+
+            if (error) {
+                console.error('Error fetching weight history:', error);
+                return [];
+            }
+            return data;
+        }
+
+
+        // --- UI 渲染功能 ---
+
+        let base64Avatar = '';
+        
+        function previewAvatar(event) {
+            const file = event.target.files[0];
+            const reader = new FileReader();
+            const previewElement = document.getElementById('avatarPreview');
+
+            if (file) {
+                reader.onload = (e) => {
+                    base64Avatar = e.target.result;
+                    previewElement.innerHTML = `<img src="${base64Avatar}" alt="Avatar Preview" class="avatar-img">`;
+                };
+                reader.readAsDataURL(file);
+            } else {
+                 base64Avatar = '';
+                 previewElement.innerHTML = '預覽圖';
+            }
+        }
+
+        function renderStudentList() {
+            const listContainer = document.getElementById('studentList');
+            listContainer.innerHTML = '';
+
+            if (currentStudents.length === 0) {
+                listContainer.innerHTML = '<p style="text-align: center; color: #6c757d;">尚未有學員登記。</p>';
+                return;
+            }
+
+            currentStudents.forEach(student => {
+                const latestWeight = student.latestWeight;
+                const card = document.createElement('div');
+                card.className = 'student-card';
+                card.setAttribute('onclick', `viewStudent('${student.id}')`);
+
+                const avatarContent = student.avatar 
+                    ? `<img src="${student.avatar}" alt="Avatar" class="avatar-img">` 
+                    : student.name.charAt(0);
+
+                card.innerHTML = `
+                    <div class="avatar-placeholder">${avatarContent}</div>
+                    <div class="student-info">
+                        <strong>${student.name}</strong>
+                        <span>初始: ${student.initial_weight.toFixed(1)} kg</span>
+                    </div>
+                    <div class="latest-weight">${latestWeight.toFixed(1)} kg</div>
+                `;
+                listContainer.appendChild(card);
+            });
+        }
+
+        async function renderWeightHistory(student, history) {
+            const historyList = document.getElementById('weightHistory');
+            historyList.innerHTML = '';
             
-            // 加載今日飲水記錄
+            const initialWeight = parseFloat(student.initial_weight);
+            const latestRecord = history[0] || { weight: initialWeight }; // 最新記錄
+
+            // 確保歷史記錄按日期降序排列 (已在 getWeightHistory 中完成)
+            
+            history.forEach((record, index) => {
+                const weight = parseFloat(record.weight);
+                const delta = weight - initialWeight;
+                let deltaText = delta === 0 
+                    ? '---' 
+                    : delta > 0 
+                        ? `<span style="color: red;">+${delta.toFixed(1)} kg 📈</span>` 
+                        : `<span style="color: green;">${delta.toFixed(1)} kg 📉</span>`;
+                
+                // 計算與前一次記錄的差值
+                let previousWeight = index < history.length - 1 
+                    ? parseFloat(history[index + 1].weight) 
+                    : initialWeight; 
+                
+                let sessionDelta = weight - previousWeight;
+                let sessionDeltaText = sessionDelta === 0 
+                    ? '' 
+                    : sessionDelta > 0 
+                        ? ` (↑${sessionDelta.toFixed(1)})` 
+                        : ` (↓${Math.abs(sessionDelta).toFixed(1)})`;
+
+                historyList.innerHTML += `
+                    <li>
+                        <span>📅 ${record.date}</span>
+                        <span style="font-weight: bold;">${weight.toFixed(1)} kg ${sessionDeltaText}</span>
+                        <span>總變動: ${deltaText}</span>
+                    </li>
+                `;
+            });
+            
+            // 4. 更新總結區
+            const latestWeightValue = parseFloat(latestRecord.weight);
+            const totalDelta = latestWeightValue - initialWeight;
+            const totalDeltaText = totalDelta === 0 
+                ? '0.0 kg'
+                : totalDelta > 0 
+                    ? `+${totalDelta.toFixed(1)} kg` 
+                    : `${totalDelta.toFixed(1)} kg`;
+
+            document.getElementById('summary-delta').textContent = totalDeltaText;
+            document.getElementById('summary-delta').style.color = totalDelta === 0 ? '#6c757d' : totalDelta > 0 ? '#dc3545' : '#28a745';
+            document.getElementById('summary-current').textContent = `${latestWeightValue.toFixed(1)} kg`;
+        }
+
+
+        // --- Supabase CRUD 操作 ---
+
+        /**
+         * 新增學員 (Supabase INSERT)
+         */
+        async function addStudent() {
+            const name = document.getElementById('newStudentName').value.trim();
+            const initialWeight = parseFloat(document.getElementById('initialWeight').value);
+            
+            if (!name || isNaN(initialWeight) || initialWeight <= 0) {
+                alert('請填寫有效的姓名和初始體重！');
+                return;
+            }
+
+            // 1. 插入學員資料
+            const { data: studentData, error: studentError } = await supabase
+                .from('students')
+                .insert([{ 
+                    name: name, 
+                    avatar: base64Avatar, 
+                    initial_weight: initialWeight 
+                }])
+                .select(); // 確保返回新創建的 ID
+
+            if (studentError) {
+                alert(`新增學員失敗: ${studentError.message}`);
+                console.error(studentError);
+                return;
+            }
+
+            const newStudentId = studentData[0].id;
             const today = new Date().toISOString().split('T')[0];
-            const { data: waterData, error: waterError } = await supabase
-                .from('water_records')
-                .select('*')
-                .eq('user_id', currentUser.id)
-                .eq('date', today)
-                .order('created_at', { ascending: false });
+
+            // 2. 插入初始體重記錄
+            const { error: recordError } = await supabase
+                .from('weight_records')
+                .insert([{
+                    student_id: newStudentId,
+                    date: today,
+                    weight: initialWeight
+                }]);
+
+            if (recordError) {
+                alert(`警告: 初始體重記錄失敗: ${recordError.message}`);
+                console.error(recordError);
+            }
+
+            alert(`學員 ${name} 登記成功！`);
             
-            if (waterError) {
-                console.error('Error loading water records:', waterError);
+            // 清空表單並重新載入列表
+            document.getElementById('newStudentName').value = '';
+            document.getElementById('initialWeight').value = '';
+            document.getElementById('newStudentAvatar').value = '';
+            document.getElementById('avatarPreview').innerHTML = '預覽圖';
+            base64Avatar = '';
+            loadStudents();
+        }
+
+        /**
+         * 查看學員詳情 (Supabase SELECT)
+         */
+        async function viewStudent(studentId) {
+            const student = currentStudents.find(s => s.id === studentId);
+            if (!student) return;
+
+            currentViewingStudentId = studentId;
+            const detailSection = document.getElementById('studentDetail');
+            
+            // 載入體重歷史
+            const weightHistory = await getWeightHistory(studentId);
+
+            // 1. 渲染標頭和頭像
+            document.getElementById('detail-name').textContent = student.name;
+            document.getElementById('detail-initial-weight').textContent = `初始體重: ${parseFloat(student.initial_weight).toFixed(1)} kg`;
+            
+            const detailAvatar = document.getElementById('detail-avatar');
+            detailAvatar.innerHTML = student.avatar 
+                ? `<img src="${student.avatar}" alt="Avatar" class="avatar-img">` 
+                : student.name.charAt(0);
+
+            // 2. 渲染體重歷史
+            renderWeightHistory(student, weightHistory);
+            
+            // 3. 顯示詳情區
+            detailSection.style.display = 'block';
+        }
+
+        /**
+         * 新增/更新體重記錄 (Supabase UPSERT)
+         */
+        async function recordWeight() {
+            const date = document.getElementById('recordDate').value;
+            const weight = parseFloat(document.getElementById('recordWeight').value);
+            const studentId = currentViewingStudentId;
+
+            if (!date || isNaN(weight) || weight <= 0 || !studentId) {
+                alert('請輸入有效的日期和體重！');
                 return;
             }
             
-            // 更新UI
-            document.getElementById('display-username').textContent = currentUser.email.split('@')[0];
-            document.getElementById('goal-intake').textContent = profileData.daily_goal;
-            
-            // 計算今日總飲水量
-            let totalIntake = 0;
-            if (waterData && waterData.length > 0) {
-                waterData.forEach(record => {
-                    totalIntake += record.amount;
-                });
-            }
-            
-            // 更新進度
-            updateProgress(totalIntake, profileData.daily_goal);
-            
-            // 更新歷史記錄
-            updateHistoryList(waterData);
-        }
+            // 使用 UPSERT 確保如果同一天有記錄則更新，沒有則新增
+            // 確保您的 weight_records 表設定了 (student_id, date) 上的唯一索引 (Unique Constraint)，Supabase 才能正確執行 UPSERT
+            const { error } = await supabase
+                .from('weight_records')
+                .upsert(
+                    { 
+                        student_id: studentId, 
+                        date: date, 
+                        weight: weight 
+                    },
+                    { onConflict: 'student_id, date' } 
+                );
 
-        function showApp() {
-            loginScreen.classList.add('hidden');
-            registerScreen.classList.add('hidden');
-            appScreen.style.display = 'block';
-        }
-
-        function fillAmount(amount) {
-            const input = document.getElementById('custom-amount');
-            input.value = amount;
-            input.focus();
-            input.style.borderColor = '#3498db';
-            setTimeout(() => {
-                input.style.borderColor = '#ddd';
-            }, 300);
-        }
-
-        async function submitWater() {
-            if (!currentUser) return;
-            
-            const input = document.getElementById('custom-amount');
-            const amount = parseInt(input.value);
-            
-            if (!amount || amount <= 0) {
-                alert("請輸入有效的毫升數");
+            if (error) {
+                alert(`記錄體重失敗: ${error.message}`);
+                console.error(error);
                 return;
             }
-            
-            if (amount > 5000) {
-                alert("單次飲水量不宜超過 5000ml");
-                return;
-            }
-            
-            // 顯示加載狀態
-            setLoadingState(submitWaterBtn, true);
-            
-            try {
-                const today = new Date().toISOString().split('T')[0];
-                const { data, error } = await supabase
-                    .from('water_records')
-                    .insert([
-                        { 
-                            user_id: currentUser.id, 
-                            amount: amount,
-                            date: today,
-                            created_at: new Date()
-                        }
-                    ]);
-                
-                if (error) {
-                    console.error('Error adding water record:', error);
-                    alert("記錄添加失敗，請重試");
-                    return;
-                }
-                
-                // 重新加載數據
-                await loadUserData();
-                
-                // 清空輸入框
-                input.value = '';
-            } catch (err) {
-                console.error('Error submitting water:', err);
-                alert("提交過程中發生錯誤");
-            } finally {
-                setLoadingState(submitWaterBtn, false);
-            }
-        }
 
-        async function resetDay() {
-            if (!currentUser) return;
+            alert('體重記錄成功！');
             
-            if (!confirm("確定要清空今日的所有記錄嗎？")) {
-                return;
+            // 重新載入詳情和列表
+            const student = currentStudents.find(s => s.id === studentId);
+            if (student) {
+                viewStudent(studentId); // 重新載入詳情
+                loadStudents(); // 重新載入列表以更新最新體重
             }
             
-            // 顯示加載狀態
-            setLoadingState(resetDayBtn, true);
-            
-            try {
-                const today = new Date().toISOString().split('T')[0];
-                const { error } = await supabase
-                    .from('water_records')
-                    .delete()
-                    .eq('user_id', currentUser.id)
-                    .eq('date', today);
-                
-                if (error) {
-                    console.error('Error resetting daily records:', error);
-                    alert("重置失敗，請重試");
-                    return;
-                }
-                
-                // 重新加載數據
-                await loadUserData();
-            } catch (err) {
-                console.error('Error resetting day:', err);
-                alert("重置過程中發生錯誤");
-            } finally {
-                setLoadingState(resetDayBtn, false);
-            }
-        }
-
-        async function checkAndResetDailyData() {
-            // 檢查是否需要重置每日數據
-            // 在Supabase中，我們不需要手動重置，因為我們按日期存儲記錄
-            // 這個函數主要用於更新UI
-            await loadUserData();
-        }
-
-        function updateProgress(currentIntake, goal) {
-            document.getElementById('current-intake').textContent = currentIntake;
-            
-            let percentage = Math.round((currentIntake / goal) * 100);
-            if (percentage > 100) percentage = 100;
-            
-            document.getElementById('percentage').textContent = percentage + '%';
-            document.getElementById('wave').style.height = percentage + '%';
-        }
-
-        function updateHistoryList(records) {
-            const list = document.getElementById('history-list');
-            list.innerHTML = '';
-            
-            if (!records || records.length === 0) {
-                list.innerHTML = '<li style="justify-content:center; color:#999;">尚無記錄</li>';
-            } else {
-                records.forEach(record => {
-                    const li = document.createElement('li');
-                    const time = new Date(record.created_at).toLocaleTimeString('zh-TW', { 
-                        hour: '2-digit', 
-                        minute: '2-digit' 
-                    });
-                    
-                    li.innerHTML = `
-                        <span><i class="fas fa-glass-water"></i> ${record.amount} ml</span>
-                        <span class="time">${time}</span>
-                    `;
-                    list.appendChild(li);
-                });
-            }
-        }
-
-        function setLoadingState(button, isLoading) {
-            if (isLoading) {
-                button.classList.add('loading');
-                button.disabled = true;
-            } else {
-                button.classList.remove('loading');
-                button.disabled = false;
-            }
+            // 清空體重輸入
+            document.getElementById('recordWeight').value = '';
+            document.getElementById('recordDate').valueAsDate = new Date(); 
         }
     </script>
+
 </body>
 </html>
