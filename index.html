@@ -246,7 +246,7 @@
 <body>
 
     <div class="container">
-        <h1>🏃 馬拉松體重管理系統 ()</h1>
+        <h1>🏃 馬拉松體重管理系統 (Supabase)</h1>
         
         <div class="alert-info">
             ⚠️ **重要提示**: 請在 &lt;script&gt; 區塊中，將 `YOUR_SUPABASE_URL` 和 `YOUR_SUPABASE_ANON_KEY` 替換為您的實際 Supabase 專案憑證！
@@ -323,7 +323,7 @@
         let currentViewingStudentId = null;
 
         document.addEventListener('DOMContentLoaded', () => {
-            if (SUPABASE_URL === 'YOUR_SUPABASE_URL') {
+            if (SUPABASE_URL === 'https://rnghrlmernrtuqntvjkt.supabase.co') {
                  document.getElementById('studentList').innerHTML = '<p style="color: red; text-align: center;">連線錯誤：請先在程式碼中填入您的 Supabase 憑證！</p>';
                  return;
             }
